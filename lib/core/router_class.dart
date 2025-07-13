@@ -2,9 +2,9 @@ import 'package:firebase_setup/views/auth/create_account_screen.dart';
 import 'package:firebase_setup/views/auth/login_screen.dart';
 import 'package:firebase_setup/views/home/home_screen.dart';
 import 'package:firebase_setup/views/home/profile_screen.dart';
-import 'package:firebase_setup/views/home/splash_screen.dart'
-    hide HomeScreen, LoginScreen;
+import 'package:firebase_setup/views/home/splash_screen.dart';
 import 'package:firebase_setup/views/note/notes_add_screen.dart';
+import 'package:firebase_setup/views/note/notes_view_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -54,6 +54,15 @@ final GoRouter appRouter = GoRouter(
         return const NotesAddScreen();
       },
     ),
+
+    // Notes view screen
+    // GoRoute(
+    //   path: '/view-note',
+    //   name: 'viewNote',
+    //   builder: (BuildContext context, GoRouterState state) {
+    //     return const NoteViewScreen(note:);
+    //   },
+    // ),
 
     // Profile screen
     GoRoute(
