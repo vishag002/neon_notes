@@ -1,19 +1,19 @@
 // screens/login_screen.dart
 import 'package:firebase_setup/core/color_const.dart';
-import 'package:firebase_setup/views/home/home_screen.dart';
+import 'package:firebase_setup/data/models/login_view_model.dart';
 import 'package:firebase_setup/widgets/neon_notes_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class LoginScreen extends StatefulWidget {
-  // Removed onThemeModeChanged and currentThemeMode properties
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FocusNode _emailFocusNode = FocusNode();
@@ -38,109 +38,13 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Widget _buildInputField({
-    required TextEditingController controller,
-    required String hintText,
-    required FocusNode focusNode,
-    required LinearGradient borderGradient,
-    bool isPassword = false,
-  }) {
-    const double borderWidth = 2.0;
-    const double glowBlurRadius = 20.0;
-    const double glowSpreadRadius = 0.0;
-    const double glowOpacity = 0.1;
-
-    return AnimatedBuilder(
-      animation: focusNode,
-      builder: (context, child) {
-        final bool isFocused = focusNode.hasFocus;
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(15.0),
-            border: GradientBoxBorder(
-              gradient: borderGradient,
-              width: borderWidth,
-            ),
-            boxShadow: isFocused
-                ? [
-                    BoxShadow(
-                      color: borderGradient.colors.first.withOpacity(
-                        glowOpacity,
-                      ),
-                      blurRadius: glowBlurRadius,
-                      spreadRadius: glowSpreadRadius,
-                      offset: Offset.zero,
-                    ),
-                    BoxShadow(
-                      color: borderGradient.colors.last.withOpacity(
-                        glowOpacity,
-                      ),
-                      blurRadius: glowBlurRadius,
-                      spreadRadius: glowSpreadRadius,
-                      offset: Offset.zero,
-                    ),
-                  ]
-                : [],
-          ),
-          child: TextField(
-            controller: controller,
-            focusNode: focusNode,
-            obscureText: isPassword,
-            style: const TextStyle(color: AppColors.textLight, fontSize: 16.0),
-            decoration: InputDecoration(
-              hintText: hintText,
-              hintStyle: const TextStyle(color: AppColors.textDark),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
-                vertical: 15.0,
-              ),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-            ),
-            cursorColor: borderGradient.colors.first,
-          ),
-        );
-      },
-    );
-  }
-
-  void _handleLogin() {
-    final email = _emailController.text;
-    final password = _passwordController.text;
-
-    if (email.isNotEmpty && password.isNotEmpty) {
-      print('Attempting Login with Email: $email, Password: $password');
-      // Navigate to HomeScreen without theme parameters
-      context.go('/home');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password')),
-      );
-    }
-  }
-
-  void _handleLoginWithGoogle() {
-    print('Login with Google button tapped!');
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Google Login (mock)!')));
-  }
-
-  void _handleRegisterHere() {
-    print('Register Here tapped!');
-    context.go('/create-account');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Navigate to Register Screen (mock)!')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    //riverpod
+    final state = ref.watch(loginViewModelProvider);
+    final notifier = ref.read(loginViewModelProvider.notifier);
     return Scaffold(
-      backgroundColor:
-          AppColors.darkBackground, // Ensure dark background is set here
+      backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
         backgroundColor: AppColors.darkBackground,
         elevation: 0,
@@ -177,6 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 30.0),
             _buildInputField(
+              onChanged: notifier.setEmail,
               controller: _emailController,
               hintText: 'Email',
               focusNode: _emailFocusNode,
@@ -184,6 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 20.0),
             _buildInputField(
+              onChanged: notifier.setPassword,
               controller: _passwordController,
               hintText: 'Password',
               focusNode: _passwordFocusNode,
@@ -192,37 +98,72 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 30.0),
             GestureDetector(
-              onTap: _handleLogin,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 15.0),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primaryBlue, AppColors.primaryPurple],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(15.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryPurple.withOpacity(0.4),
-                      blurRadius: 15.0,
-                      spreadRadius: 2.0,
-                      offset: Offset.zero,
+              onTap: () async {
+                //todo : login functionality her
+                final loginNotifier = ref.read(loginViewModelProvider.notifier);
+                final success = await loginNotifier.login();
+
+                if (!context.mounted) return;
+
+                if (success) {
+                  final loginNotifier = ref.read(
+                    loginViewModelProvider.notifier,
+                  );
+                  final success = await loginNotifier.login();
+
+                  if (!context.mounted) return;
+
+                  if (success) {
+                    context.go('/home');
+                    ref.read(loginViewModelProvider.notifier).resetState();
+                  } else {
+                    final error = ref.read(loginViewModelProvider).errorMessage;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(error ?? "Unknown error")),
+                    );
+                  }
+                } else {
+                  final error = ref.read(loginViewModelProvider).errorMessage;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(error ?? "Unknown error")),
+                  );
+                }
+              },
+              child: state.isLoading
+                  ? const CircularProgressIndicator()
+                  : Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 15.0),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            AppColors.primaryBlue,
+                            AppColors.primaryPurple,
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(15.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryPurple.withOpacity(0.4),
+                            blurRadius: 15.0,
+                            spreadRadius: 2.0,
+                            offset: Offset.zero,
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'LOGIN',
+                          style: TextStyle(
+                            color: AppColors.textLight,
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text(
-                    'LOGIN',
-                    style: TextStyle(
-                      color: AppColors.textLight,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
             ),
             const SizedBox(height: 20.0),
             Row(
@@ -250,7 +191,13 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 20.0),
             GestureDetector(
-              onTap: _handleLoginWithGoogle,
+              onTap: () async {
+                //todo:add google on tap functionality here
+                final loginViewModel = ref.read(
+                  loginViewModelProvider.notifier,
+                );
+                loginViewModel.googleSignUpFunction(context: context);
+              },
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -296,7 +243,13 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 30.0),
             GestureDetector(
-              onTap: _handleRegisterHere,
+              onTap: () {
+                //todo : register functionalit here
+                final newUserNavigation = ref.read(
+                  loginViewModelProvider.notifier,
+                );
+                newUserNavigation.newUserNavigationFunction(context: context);
+              },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -327,4 +280,75 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+}
+
+///
+Widget _buildInputField({
+  required void Function(String) onChanged,
+  required TextEditingController controller,
+  required String hintText,
+  required FocusNode focusNode,
+  required LinearGradient borderGradient,
+  bool isPassword = false,
+}) {
+  //riverpod funtions
+
+  const double borderWidth = 2.0;
+  const double glowBlurRadius = 20.0;
+  const double glowSpreadRadius = 0.0;
+  const double glowOpacity = 0.1;
+
+  return AnimatedBuilder(
+    animation: focusNode,
+    builder: (context, child) {
+      final bool isFocused = focusNode.hasFocus;
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(15.0),
+          border: GradientBoxBorder(
+            gradient: borderGradient,
+            width: borderWidth,
+          ),
+          boxShadow: isFocused
+              ? [
+                  BoxShadow(
+                    color: borderGradient.colors.first.withOpacity(glowOpacity),
+                    blurRadius: glowBlurRadius,
+                    spreadRadius: glowSpreadRadius,
+                    offset: Offset.zero,
+                  ),
+                  BoxShadow(
+                    color: borderGradient.colors.last.withOpacity(glowOpacity),
+                    blurRadius: glowBlurRadius,
+                    spreadRadius: glowSpreadRadius,
+                    offset: Offset.zero,
+                  ),
+                ]
+              : [],
+        ),
+        child: TextField(
+          onChanged: (value) {
+            onChanged(value);
+          },
+          controller: controller,
+          focusNode: focusNode,
+          obscureText: isPassword,
+          style: const TextStyle(color: AppColors.textLight, fontSize: 16.0),
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: const TextStyle(color: AppColors.textDark),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 15.0,
+            ),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+          ),
+          cursorColor: borderGradient.colors.first,
+        ),
+      );
+    },
+  );
 }

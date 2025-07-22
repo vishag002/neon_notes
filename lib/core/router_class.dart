@@ -4,7 +4,6 @@ import 'package:firebase_setup/views/home/home_screen.dart';
 import 'package:firebase_setup/views/home/profile_screen.dart';
 import 'package:firebase_setup/views/home/splash_screen.dart';
 import 'package:firebase_setup/views/note/notes_add_screen.dart';
-import 'package:firebase_setup/views/note/notes_view_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -45,6 +44,7 @@ final GoRouter appRouter = GoRouter(
         return const CreateAccountScreen();
       },
     ),
+    //this is new route
 
     // Add notes screen
     GoRoute(
@@ -72,5 +72,7 @@ final GoRouter appRouter = GoRouter(
         return const ProfileScreen();
       },
     ),
+
+    //
   ],
 );
