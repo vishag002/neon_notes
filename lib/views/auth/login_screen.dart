@@ -100,22 +100,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             GestureDetector(
               onTap: () async {
                 //todo : login functionality her
-                final loginNotifier = ref.read(loginViewModelProvider.notifier);
-                final success = await loginNotifier.login();
-
+                final success = await notifier.login();
                 if (!context.mounted) return;
-
                 if (success) {
-                  final loginNotifier = ref.read(
-                    loginViewModelProvider.notifier,
-                  );
-                  final success = await loginNotifier.login();
-
                   if (!context.mounted) return;
-
                   if (success) {
                     context.go('/home');
-                    ref.read(loginViewModelProvider.notifier).resetState();
+                    notifier.resetState();
                   } else {
                     final error = ref.read(loginViewModelProvider).errorMessage;
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -193,9 +184,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             GestureDetector(
               onTap: () async {
                 //todo:add google on tap functionality here
-                final loginViewModel = ref.read(
-                  loginViewModelProvider.notifier,
-                );
+                final loginViewModel = notifier;
                 loginViewModel.googleSignUpFunction(context: context);
               },
               child: Container(
@@ -245,9 +234,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             GestureDetector(
               onTap: () {
                 //todo : register functionalit here
-                final newUserNavigation = ref.read(
-                  loginViewModelProvider.notifier,
-                );
+                final newUserNavigation = notifier;
                 newUserNavigation.newUserNavigationFunction(context: context);
               },
               child: Row(

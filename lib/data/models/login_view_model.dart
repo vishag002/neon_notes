@@ -2,38 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// A simple class to hold login form state
-class LoginState {
-  final String email;
-  final String password;
-  final bool isLoading;
-  final String? errorMessage;
-
-  const LoginState({
-    this.email = '',
-    this.password = '',
-    this.isLoading = false,
-    this.errorMessage,
-  });
-
-  LoginState copyWith({
-    String? email,
-    String? password,
-    bool? isLoading,
-    String? errorMessage,
-  }) {
-    return LoginState(
-      email: email ?? this.email,
-      password: password ?? this.password,
-      isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
-    );
-  }
-}
-
 /// ViewModel using StateNotifier to manage LoginState
-class LoginViewModel extends StateNotifier<LoginState> {
-  LoginViewModel() : super(const LoginState());
+class LoginViewModelNotifier extends StateNotifier<LoginState> {
+  LoginViewModelNotifier() : super(const LoginState());
 
   void setEmail(String value) {
     state = state.copyWith(email: value);
@@ -97,6 +68,38 @@ class LoginViewModel extends StateNotifier<LoginState> {
 
 /// Riverpod provider
 final loginViewModelProvider =
-    StateNotifierProvider<LoginViewModel, LoginState>((ref) {
-      return LoginViewModel();
+    StateNotifierProvider<LoginViewModelNotifier, LoginState>((ref) {
+      return LoginViewModelNotifier();
     });
+
+/////
+///
+/// A simple class to hold login form state
+class LoginState {
+  final String email;
+  final String password;
+  final bool isLoading;
+  final String? errorMessage;
+
+  const LoginState({
+    this.email = '',
+    this.password = '',
+    this.isLoading = false,
+    this.errorMessage,
+  });
+
+  LoginState copyWith({
+    String? email,
+    String? password,
+
+    bool? isLoading,
+    String? errorMessage,
+  }) {
+    return LoginState(
+      email: email ?? this.email,
+      password: password ?? this.password,
+      isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage,
+    );
+  }
+}

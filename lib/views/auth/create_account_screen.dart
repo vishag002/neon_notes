@@ -1,18 +1,19 @@
 // screens/register_screen.dart
 import 'package:firebase_setup/core/color_const.dart';
-import 'package:firebase_setup/views/home/home_screen.dart';
+import 'package:firebase_setup/data/models/signup_view_model.dart';
 import 'package:firebase_setup/widgets/neon_notes_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class CreateAccountScreen extends StatefulWidget {
+class CreateAccountScreen extends ConsumerStatefulWidget {
   const CreateAccountScreen({super.key});
-
   @override
-  State<CreateAccountScreen> createState() => _CreateAccountScreenState();
+  ConsumerState<CreateAccountScreen> createState() =>
+      _CreateAccountScreenState();
 }
 
-class _CreateAccountScreenState extends State<CreateAccountScreen> {
+class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -52,6 +53,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     required String hintText,
     required FocusNode focusNode,
     required LinearGradient borderGradient,
+    required void Function(String) onChanged,
     bool isPassword = false,
   }) {
     const double borderWidth = 2.0;
@@ -93,6 +95,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 : [],
           ),
           child: TextField(
+            onChanged: onChanged,
             controller: controller,
             focusNode: focusNode,
             obscureText: isPassword, // Hide text for password fields
@@ -115,51 +118,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     );
   }
 
-  // --- Placeholder Registration Logic ---
-  void _handleRegister() {
-    final email = _emailController.text;
-    final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
-
-    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
-      return;
-    }
-
-    if (password != confirmPassword) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
-      return;
-    }
-
-    print('Attempting Registration with Email: $email, Password: $password');
-    // In a real app, perform registration here
-    // For now, simulate success and navigate to HomeScreen
-    Navigator.pushReplacement(
-      // Use pushReplacement to prevent going back to register
-      context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
-    );
-  }
-
-  void _handleSignUpWithGoogle() {
-    print('Sign Up with Google button tapped!');
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Google Sign Up (mock)!')));
-    // In a real app, integrate with Google Sign-Up SDK
-  }
-
-  void _handleLoginHere() {
-    print('Already existing user? Login here tapped!');
-    context.go('/login');
-  }
-
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(signUpProvider);
+    final notifier = ref.read(signUpProvider.notifier);
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
@@ -201,6 +163,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
             // Email Input
             _buildInputField(
+              onChanged: (value) => notifier.setEmail(value),
               controller: _emailController,
               hintText: 'Email',
               focusNode: _emailFocusNode,
@@ -210,6 +173,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
             // Password Input
             _buildInputField(
+              onChanged: (value) => notifier.setPassword(value),
               controller: _passwordController,
               hintText: 'Password',
               focusNode: _passwordFocusNode,
@@ -220,6 +184,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
             // Confirm Password Input
             _buildInputField(
+              onChanged: (value) => notifier.setConfirmPassword(value),
               controller: _confirmPasswordController,
               hintText: 'Confirm Password',
               focusNode: _confirmPasswordFocusNode,
@@ -230,37 +195,54 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
             // Register Button
             GestureDetector(
-              onTap: _handleRegister,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 15.0),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primaryBlue, AppColors.primaryPurple],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(15.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryPurple.withOpacity(0.4),
-                      blurRadius: 15.0,
-                      spreadRadius: 2.0,
-                      offset: Offset.zero,
+              onTap: () async {
+                final success = await notifier.signUp();
+                if (!context.mounted) return;
+                if (success) {
+                  context.go('/home');
+                  notifier.resetState();
+                } else {
+                  final error = ref.read(signUpProvider).errorMessage;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(error ?? "Unknown error")),
+                  );
+                }
+              },
+              child: state.isLoading
+                  ? const CircularProgressIndicator()
+                  : Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 15.0),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            AppColors.primaryBlue,
+                            AppColors.primaryPurple,
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(15.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryPurple.withOpacity(0.4),
+                            blurRadius: 15.0,
+                            spreadRadius: 2.0,
+                            offset: Offset.zero,
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'REGISTER',
+                          style: TextStyle(
+                            color: AppColors.textLight,
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text(
-                    'REGISTER',
-                    style: TextStyle(
-                      color: AppColors.textLight,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
             ),
             const SizedBox(height: 20.0),
 
@@ -292,7 +274,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
             // Sign Up with Google Button
             GestureDetector(
-              onTap: _handleSignUpWithGoogle,
+              onTap: () {
+                //
+              },
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -343,7 +327,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
             // Already existing user? Login Here text
             GestureDetector(
-              onTap: _handleLoginHere,
+              onTap: () {
+                //
+              },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
