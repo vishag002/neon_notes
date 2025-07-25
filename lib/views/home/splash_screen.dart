@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
@@ -14,8 +15,6 @@ class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   late AnimationController _controllerHome;
   late AnimationController _controllerLogin;
-  late Animation<double> _animationHome;
-  late Animation<double> _animationLogin;
 
   final List<Orb> _orbs = [];
   final List<Blast> _blasts = [];
@@ -32,18 +31,10 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 800),
     )..repeat(reverse: true);
 
-    _animationHome = Tween<double>(begin: 1.0, end: 1.3).animate(
-      CurvedAnimation(parent: _controllerHome, curve: Curves.easeInOut),
-    );
-
     _controllerLogin = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
-
-    _animationLogin = Tween<double>(begin: 1.0, end: 1.3).animate(
-      CurvedAnimation(parent: _controllerLogin, curve: Curves.easeInOut),
-    );
 
     for (int i = 0; i < 8; i++) {
       _orbs.add(_createRandomOrb());
@@ -67,6 +58,17 @@ class _SplashScreenState extends State<SplashScreen>
 
       setState(() {});
     })..start();
+    // 🚀 Add the splash timer and auth check
+    Future.delayed(const Duration(seconds: 5), () {
+      final user = FirebaseAuth.instance.currentUser;
+      if (mounted) {
+        if (user != null) {
+          context.go('/home');
+        } else {
+          context.go('/login');
+        }
+      }
+    });
   }
 
   Orb _createRandomOrb() {
@@ -108,39 +110,39 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  Widget buildBouncingButton({
-    required String text,
-    required Animation<double> animation,
-    required VoidCallback onPressed,
-    required Color color,
-  }) {
-    return ScaleTransition(
-      scale: animation,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: color, width: 2),
-            borderRadius: BorderRadius.circular(25),
-          ),
-          elevation: 20,
-          shadowColor: color.withOpacity(0.8),
-        ),
-        onPressed: onPressed,
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 22,
-            color: color,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget buildBouncingButton({
+  //   required String text,
+  //   required Animation<double> animation,
+  //   required VoidCallback onPressed,
+  //   required Color color,
+  // }) {
+  //   return ScaleTransition(
+  //     scale: animation,
+  //     child: ElevatedButton(
+  //       style: ElevatedButton.styleFrom(
+  //         backgroundColor: Colors.transparent,
+  //         foregroundColor: Colors.white,
+  //         padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
+  //         shape: RoundedRectangleBorder(
+  //           side: BorderSide(color: color, width: 2),
+  //           borderRadius: BorderRadius.circular(25),
+  //         ),
+  //         elevation: 20,
+  //         shadowColor: color.withOpacity(0.8),
+  //       ),
+  //       onPressed: onPressed,
+  //       child: Text(
+  //         text,
+  //         style: TextStyle(
+  //           fontSize: 22,
+  //           color: color,
+  //           fontWeight: FontWeight.bold,
+  //           letterSpacing: 1.2,
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -171,19 +173,19 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  buildBouncingButton(
-                    text: 'Home',
-                    animation: _animationHome,
-                    onPressed: () => context.go('/home'),
-                    color: Colors.cyanAccent,
-                  ),
-                  const SizedBox(height: 50),
-                  buildBouncingButton(
-                    text: 'Login',
-                    animation: _animationLogin,
-                    onPressed: () => context.go('/login'),
-                    color: Colors.pinkAccent,
-                  ),
+                  // buildBouncingButton(
+                  //   text: 'Home',
+                  //   animation: _animationHome,
+                  //   onPressed: () => context.go('/home'),
+                  //   color: Colors.cyanAccent,
+                  // ),
+                  // const SizedBox(height: 50),
+                  // buildBouncingButton(
+                  //   text: 'Login',
+                  //   animation: _animationLogin,
+                  //   onPressed: () => context.go('/login'),
+                  //   color: Colors.pinkAccent,
+                  // ),
                 ],
               ),
             ),

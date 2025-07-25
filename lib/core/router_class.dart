@@ -14,7 +14,7 @@ final GoRouter appRouter = GoRouter(
       path: '/',
       name: 'splash',
       builder: (BuildContext context, GoRouterState state) {
-        return const SplashScreen();
+        return SplashScreen();
       },
     ),
 

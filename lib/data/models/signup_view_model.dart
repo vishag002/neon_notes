@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,38 +23,59 @@ class SignupViewModelNotifier extends StateNotifier<SignUpState> {
 
   //sign-up function
   Future<bool> signUp() async {
-    //check if textfields contain values
+    // Check if textfields contain values
     if (state.email.isEmpty ||
         state.password.isEmpty ||
         state.confirmPassword.isEmpty) {
       state = state.copyWith(
         errorMessage: "Email and password cannot be empty",
       );
-      return false;
+      return false; // Returning false if the fields are empty
     }
-    //check password = confirmpassword
+
+    // Check if password equals confirm password
     if (state.password != state.confirmPassword) {
       state = state.copyWith(errorMessage: "Passwords do not match");
-      return false;
+      return false; // Returning false if passwords don't match
     }
 
-    //set the loading true
+    // Set loading to true
     state = state.copyWith(isLoading: true, errorMessage: null);
 
-    //pass email and password to sign up
     try {
-      // TODO: Replace with actual login logic (Firebase )
+      // Firebase sign-up logic
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: state.email,
+            password: state.confirmPassword,
+          );
 
-      await Future.delayed(const Duration(seconds: 2));
-      // Example success (you can set errorMessage if login fails)
-      print(
-        "the email is ${state.email} ,the password is ${state.password},the Confirmpassword is ${state.confirmPassword}",
-      );
+      // Example success, you can use credential.user to access the user
+      print("User created: ${credential.user?.email}");
+
       state = state.copyWith(isLoading: false);
-      return true;
+
+      return true; // Return true if successful
+    } on FirebaseAuthException catch (e) {
+      // Handle specific FirebaseAuth exceptions
+      if (e.code == 'weak-password') {
+        state = state.copyWith(
+          errorMessage: 'The password provided is too weak.',
+        );
+      } else if (e.code == 'email-already-in-use') {
+        state = state.copyWith(
+          errorMessage: 'The account already exists for that email.',
+        );
+      } else {
+        state = state.copyWith(errorMessage: e.message ?? "Signup failed.");
+      }
+
+      state = state.copyWith(isLoading: false);
+      return false; // Return false on error
     } catch (error) {
+      // Catch any general errors
       state = state.copyWith(isLoading: false, errorMessage: error.toString());
-      return false;
+      return false; // Return false for unknown errors
     }
   }
 

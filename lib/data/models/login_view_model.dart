@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,16 +26,32 @@ class LoginViewModelNotifier extends StateNotifier<LoginState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      // TODO: Replace with actual login logic (Firebase or API)
-      await Future.delayed(const Duration(seconds: 2));
-      // Example success (you can set errorMessage if login fails)
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: state.email,
+        password: state.password,
+      );
+
+      print("Logged in: ${credential.user?.uid}");
       print(
         "the email is ${state.email} and the password is ${state.password}",
       );
 
       state = state.copyWith(isLoading: false);
-
       return true;
+    } on FirebaseAuthException catch (e) {
+      state = state.copyWith(isLoading: false);
+
+      if (e.code == 'user-not-found') {
+        state = state.copyWith(errorMessage: "No user found for that email.");
+      } else if (e.code == 'wrong-password') {
+        state = state.copyWith(errorMessage: "Wrong password provided.");
+      } else {
+        state = state.copyWith(
+          errorMessage: e.message ?? "Authentication error.",
+        );
+      }
+
+      return false;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,

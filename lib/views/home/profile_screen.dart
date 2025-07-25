@@ -1,4 +1,5 @@
 // screens/profile_screen.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_setup/core/color_const.dart';
 import 'package:firebase_setup/widgets/neon_notes_widget.dart';
 import 'package:flutter/material.dart';
@@ -185,7 +186,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _handleLogout() {
+  void _handleLogout() async {
+    await FirebaseAuth.instance.signOut();
     context.go('/login');
     ScaffoldMessenger.of(
       context,
@@ -206,7 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: AppColors.textLight,
           ),
           onPressed: () {
-            Navigator.pop(context); // Go back to the previous screen (Home)
+            Navigator.pop(context);
           },
         ),
         title: ShaderMask(
